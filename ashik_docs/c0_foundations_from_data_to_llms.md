@@ -40,9 +40,11 @@
 
 ---
 
-<!-- ============================================================ -->
-<!-- SECTION: INTRODUCTION                                         -->
-<!-- ============================================================ -->
+
+
+
+
+
 
 ## Introduction
 
@@ -78,6 +80,8 @@ flowchart TD
     FM --> LLMS["Large Language\nModels"]
 ```
 
+
+
 This guide walks through each branch of this tree, from the fundamentals up to LLMs and tokens:
 
 1. **Supervised Learning** — learning with labeled "answers" (classification and regression).
@@ -95,9 +99,11 @@ By the end, you should be able to explain — to an investor, a teammate, or you
 
 ---
 
-<!-- ============================================================ -->
-<!-- SECTION: CORE CONCEPTS                                        -->
-<!-- ============================================================ -->
+
+
+
+
+
 
 ## Core Concepts
 
@@ -105,25 +111,18 @@ By the end, you should be able to explain — to an investor, a teammate, or you
 
 ### 1. Supervised vs. Unsupervised Learning
 
-<!-- <thought>
-The best analogy for a beginner: Supervised learning is a student studying
-with an answer key. Every practice problem has the correct answer printed
-next to it. The student learns by comparing their attempt to the right answer
-and adjusting. Unsupervised learning is an archaeologist handed a box of
-unlabeled artifacts — no guidebook, no labels. They have to find structure
-themselves: "These 50 artifacts are made of bronze and date to the same era;
-these 30 are ceramic and more recent." The learning happens by discovering
-groupings and relationships, not by being told what's right.
-</thought> -->
+
 
 #### The Core Distinction
 
-| | Supervised Learning | Unsupervised Learning |
-|---|---|---|
-| **Training data** | Labeled — every input has a known correct output | Unlabeled — just raw data, no "answers" |
-| **What the model learns** | A mapping from inputs to outputs: *f(X) → Y* | Hidden structure, patterns, or groupings in data |
-| **Goal** | Predict the right answer for new, unseen inputs | Discover what's *in* the data that humans haven't explicitly tagged |
-| **Analogy** | A student studying with an answer key | An archaeologist sorting unlabeled artifacts into groups |
+
+|                           | Supervised Learning                              | Unsupervised Learning                                               |
+| ------------------------- | ------------------------------------------------ | ------------------------------------------------------------------- |
+| **Training data**         | Labeled — every input has a known correct output | Unlabeled — just raw data, no "answers"                             |
+| **What the model learns** | A mapping from inputs to outputs: *f(X) → Y*     | Hidden structure, patterns, or groupings in data                    |
+| **Goal**                  | Predict the right answer for new, unseen inputs  | Discover what's *in* the data that humans haven't explicitly tagged |
+| **Analogy**               | A student studying with an answer key            | An archaeologist sorting unlabeled artifacts into groups            |
+
 
 #### Supervised Learning — In Depth
 
@@ -140,25 +139,86 @@ flowchart LR
     D -.->|"poor results"| C
 ```
 
+
+
 ##### Stage 1: Data — The Driving Force
 
 Data is made up of **features** and **labels**:
+
 - **Features** are the input values the model uses to make predictions (temperature, humidity, wind direction).
 - **Labels** are the correct answers (rainfall amount, spam/not-spam).
 
 A dataset is characterized by its **size** (number of examples) and **diversity** (range of scenarios covered). Good datasets are both large *and* diverse:
 
-| Dataset | Large? | Diverse? | Problem |
-|---|---|---|---|
-| 100 years of data, but only July | Yes | No | Can't predict January rainfall |
-| Every month represented, but only 2 years | No | Yes | Not enough years to account for variability |
-| 50 years, all months, multiple regions | Yes | Yes | Strong foundation for generalization |
+
+| Dataset                                   | Large? | Diverse? | Problem                                     |
+| ----------------------------------------- | ------ | -------- | ------------------------------------------- |
+| 100 years of data, but only July          | Yes    | No       | Can't predict January rainfall              |
+| Every month represented, but only 2 years | No     | Yes      | Not enough years to account for variability |
+| 50 years, all months, multiple regions    | Yes    | Yes      | Strong foundation for generalization        |
+
 
 Datasets also vary in the number of features. A weather dataset might have hundreds of features (satellite imagery, barometric pressure, dew point) or just 3–4 (temperature, humidity, wind). More *relevant* features help the model discover better patterns, but irrelevant features add noise — not every column helps.
 
-##### Stage 2: The Model
+##### Stage 2: The Model & Its Parameters
 
-In supervised learning, a model is a complex collection of numbers (parameters) that defines a mathematical relationship between input features and output labels. Before training, these numbers are essentially random. Training is the process of finding the right values.
+In supervised learning, a model is a mathematical function that maps input features to output labels. But what *is* that function made of? **Parameters.**
+
+**What is a parameter?**
+
+A parameter is a single numerical value inside the model that gets adjusted during training. Think of parameters as the "knobs" the model can turn to improve its predictions. Before training, these knobs are set to random values. Training is the process of finding the right setting for every knob.
+
+There are two types of parameters:
+
+
+| Type        | What It Does                                                                                                                        | Analogy                                                                |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Weights** | Control how much influence each input feature has on the output. Every connection between neurons in a neural network has a weight. | Volume knobs — they amplify or dampen each input signal.               |
+| **Biases**  | Allow the model to shift its output up or down independently of the inputs. Each neuron has a bias term.                            | A baseline offset — like starting a thermostat at 20°C instead of 0°C. |
+
+
+**A concrete example:**
+
+In a simple linear model predicting house price from square footage:
+
+```
+price = weight × square_footage + bias
+price = 200 × 1500 + 50,000
+price = $350,000
+```
+
+This model has **2 parameters**: one weight (200) and one bias (50,000). Training adjusts these two numbers until the predictions match actual prices as closely as possible.
+
+Real models have far more parameters:
+
+
+| Model                    | Parameter Count | Context                           |
+| ------------------------ | --------------- | --------------------------------- |
+| Simple linear regression | 2–100           | One weight per feature + bias     |
+| Small neural network     | ~10,000         | A few hidden layers               |
+| BERT (2018)              | 110 million     | NLP breakthrough model            |
+| GPT-3 (2020)             | 175 billion     | First "large" LLM                 |
+| Llama 3 8B               | 8 billion       | Efficient open-weight model       |
+| Llama 3 70B              | 70 billion      | High-capability open-weight model |
+| GPT-4 (estimated)        | ~1.8 trillion   | Mixture-of-experts architecture   |
+
+
+When someone says "Llama 3 is a 70B model," they mean it has **70 billion parameters** — 70 billion individual numbers that were tuned during training. More parameters generally means the model can learn more complex patterns, but also requires more data, more compute, more memory, and more cost to run.
+
+**Parameters vs. hyperparameters:**
+
+Don't confuse these — they sound similar but are fundamentally different:
+
+
+|                               | Parameters                       | Hyperparameters                                          |
+| ----------------------------- | -------------------------------- | -------------------------------------------------------- |
+| **Set by**                    | The training process (automatic) | The engineer (manual, before training)                   |
+| **Examples**                  | Weights, biases                  | Learning rate, batch size, number of layers, temperature |
+| **Adjusted during training?** | Yes — this *is* training         | No — fixed before training starts                        |
+| **Analogy**                   | What the student learns          | The study schedule the teacher sets                      |
+
+
+> **Founder's Tip:** When evaluating models, parameter count is a rough proxy for capability — but not a guarantee. A well-trained 8B model can outperform a poorly trained 70B model on specific tasks. What matters is parameter count *combined with* training data quality, training compute, and alignment. Always benchmark on *your* use case rather than trusting parameter counts alone.
 
 ##### Stage 3: Training — The Learning Loop
 
@@ -166,19 +226,23 @@ In supervised learning, a model is a complex collection of numbers (parameters) 
 
 **Regression** — the label is a continuous number.
 
-| Scenario | Input Features | Predicted Value |
-|---|---|---|
-| House price | Square footage, zip code, bedrooms, lot size, interest rate | Price ($425,000) |
-| Travel time | Distance, traffic conditions, weather, road type | Minutes to arrive (23 min) |
-| Rainfall | Temperature, humidity, pressure, cloud cover, wind | Millimeters of rain (12mm) |
+
+| Scenario    | Input Features                                              | Predicted Value            |
+| ----------- | ----------------------------------------------------------- | -------------------------- |
+| House price | Square footage, zip code, bedrooms, lot size, interest rate | Price ($425,000)           |
+| Travel time | Distance, traffic conditions, weather, road type            | Minutes to arrive (23 min) |
+| Rainfall    | Temperature, humidity, pressure, cloud cover, wind          | Millimeters of rain (12mm) |
+
 
 **Classification** — the label is a discrete category.
 
-| Type | Example | Output |
-|---|---|---|
-| **Binary classification** | Is this email spam? | `spam` or `not spam` |
-| **Binary classification** | Will it rain tomorrow? | `rain` or `no rain` |
+
+| Type                           | Example                     | Output                             |
+| ------------------------------ | --------------------------- | ---------------------------------- |
+| **Binary classification**      | Is this email spam?         | `spam` or `not spam`               |
+| **Binary classification**      | Will it rain tomorrow?      | `rain` or `no rain`                |
 | **Multi-class classification** | What type of precipitation? | `rain`, `hail`, `snow`, or `sleet` |
+
 
 The model learns a **decision boundary** (for classification) or a **best-fit curve** (for regression) through the training loop:
 
@@ -270,18 +334,22 @@ flowchart LR
     A -->|"updates policy"| A
 ```
 
+
+
 The agent's goal is to learn a **policy** — a strategy that maximizes cumulative reward over time. It discovers the best actions through trial and error, not from labeled examples.
 
 **Key concepts:**
 
-| Concept | What It Means |
-|---|---|
-| **Agent** | The learner / decision-maker |
-| **Environment** | The world the agent interacts with |
-| **State** | The current situation the agent observes |
-| **Action** | What the agent does in response to a state |
-| **Reward** | A numerical signal (positive or negative) indicating how good the action was |
-| **Policy** | The learned strategy: given a state, which action to take |
+
+| Concept         | What It Means                                                                |
+| --------------- | ---------------------------------------------------------------------------- |
+| **Agent**       | The learner / decision-maker                                                 |
+| **Environment** | The world the agent interacts with                                           |
+| **State**       | The current situation the agent observes                                     |
+| **Action**      | What the agent does in response to a state                                   |
+| **Reward**      | A numerical signal (positive or negative) indicating how good the action was |
+| **Policy**      | The learned strategy: given a state, which action to take                    |
+
 
 **Real-world examples:**
 
@@ -304,16 +372,18 @@ Generative AI is a class of models that **creates new content** from user input.
 
 Generative AI is often described by its input/output modality:
 
-| Model Type | Input | Output | Example |
-|---|---|---|---|
-| **Text-to-text** | Text prompt | Text response | "Summarize this article" → summary paragraph |
-| **Text-to-image** | Text description | Image | "A sunset over mountains, watercolor style" → painting |
-| **Text-to-code** | Natural language | Source code | "Write a Python sort function" → working code |
-| **Text-to-speech** | Text | Audio | "Read this paragraph aloud" → spoken audio |
-| **Text-to-video** | Text description | Video clip | "A teddy bear swimming in the ocean" → video |
-| **Speech-to-text** | Audio | Transcribed text | Spoken words → written transcript |
-| **Image-to-text** | Image | Description | Photo of a flamingo → "This is a flamingo" |
-| **Image & text-to-image** | Image + instruction | Modified image | Photo + "remove the background" → clean cutout |
+
+| Model Type                | Input               | Output           | Example                                                |
+| ------------------------- | ------------------- | ---------------- | ------------------------------------------------------ |
+| **Text-to-text**          | Text prompt         | Text response    | "Summarize this article" → summary paragraph           |
+| **Text-to-image**         | Text description    | Image            | "A sunset over mountains, watercolor style" → painting |
+| **Text-to-code**          | Natural language    | Source code      | "Write a Python sort function" → working code          |
+| **Text-to-speech**        | Text                | Audio            | "Read this paragraph aloud" → spoken audio             |
+| **Text-to-video**         | Text description    | Video clip       | "A teddy bear swimming in the ocean" → video           |
+| **Speech-to-text**        | Audio               | Transcribed text | Spoken words → written transcript                      |
+| **Image-to-text**         | Image               | Description      | Photo of a flamingo → "This is a flamingo"             |
+| **Image & text-to-image** | Image + instruction | Modified image   | Photo + "remove the background" → clean cutout         |
+
 
 #### How Does Generative AI Work?
 
@@ -355,17 +425,7 @@ The model takes unlabeled text, masks out a piece, and trains itself to predict 
 
 ### 5. Foundation Models
 
-<!-- <thought>
-The best analogy: A foundation model is like a liberal arts education. You
-spend four years learning broadly — history, science, writing, math — and
-then you specialize in med school, law school, or engineering. The four-year
-foundation isn't wasted; it gives you reasoning skills, general knowledge,
-and adaptability that you carry into your specialty. A foundation model is
-the same: trained broadly on massive data, then specialized (fine-tuned)
-for specific tasks. Before foundation models, building an AI was like going
-straight to med school with no prior education — you had to start from
-scratch every time.
-</thought> -->
+
 
 #### What Is a Foundation Model?
 
@@ -373,12 +433,14 @@ A foundation model is a large AI model **pre-trained on broad, diverse data** at
 
 The term was coined by Stanford's Center for Research on Foundation Models (CRFM) in 2021. The key properties:
 
-| Property | What It Means |
-|---|---|
-| **Scale** | Trained on terabytes to petabytes of data (text, images, code, audio) using thousands of GPUs |
-| **Generality** | Not designed for one task — the same base model can be adapted for translation, summarization, code generation, question-answering, etc. |
+
+| Property              | What It Means                                                                                                                             |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Scale**             | Trained on terabytes to petabytes of data (text, images, code, audio) using thousands of GPUs                                             |
+| **Generality**        | Not designed for one task — the same base model can be adapted for translation, summarization, code generation, question-answering, etc.  |
 | **Transfer learning** | Knowledge learned during pre-training transfers to downstream tasks, dramatically reducing the data and compute needed for specialization |
-| **Emergence** | Capabilities appear at scale that weren't explicitly trained for (e.g., in-context learning, chain-of-thought reasoning) |
+| **Emergence**         | Capabilities appear at scale that weren't explicitly trained for (e.g., in-context learning, chain-of-thought reasoning)                  |
+
 
 #### The "Before and After"
 
@@ -450,31 +512,22 @@ The term "foundation model" is widely used but not universally agreed upon in it
 
 ### 6. Large Language Models (LLMs)
 
-<!-- <thought>
-The best way to explain how LLMs differ from traditional ML: Traditional ML
-is a specialist — you train a model to do ONE thing (predict house prices,
-classify images, detect fraud). An LLM is a generalist that was trained on
-so much text that it developed broad capabilities. The key difference isn't
-just scale; it's the training objective. Traditional models have task-specific
-objectives ("minimize classification error on this dataset"). LLMs have a
-universal objective ("predict the next word") that, at scale, produces
-emergent general intelligence. It's the difference between training someone
-to be a plumber vs. giving someone such a broad education that they can
-figure out plumbing, along with a thousand other things, on the fly.
-</thought> -->
+
 
 #### What Makes an LLM Different from Traditional ML?
 
 An LLM is a foundation model specialized in language. But the differences from traditional ML go deeper than just "it's bigger":
 
-| Dimension | Traditional ML | Large Language Models |
-|---|---|---|
-| **Training objective** | Task-specific (e.g., "minimize classification error on this dataset") | Universal: "predict the next token" — one objective, applied to all of language |
-| **Data** | Curated, labeled datasets (thousands to millions of examples) | Massive unlabeled text corpora (trillions of tokens from the internet, books, code) |
-| **Architecture** | Varies widely (decision trees, SVMs, CNNs, RNNs...) | Almost exclusively the **Transformer** architecture (2017) |
-| **Input/Output** | Fixed format (tabular data → number, image → class label) | Flexible natural language (text → text, covering almost any task) |
-| **How you "program" it** | Feature engineering + training | **Prompting** — you describe what you want in natural language |
-| **Generalization** | Narrow — only does what it was trained for | Broad — handles tasks it was never explicitly trained for (zero-shot) |
+
+| Dimension                | Traditional ML                                                        | Large Language Models                                                               |
+| ------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| **Training objective**   | Task-specific (e.g., "minimize classification error on this dataset") | Universal: "predict the next token" — one objective, applied to all of language     |
+| **Data**                 | Curated, labeled datasets (thousands to millions of examples)         | Massive unlabeled text corpora (trillions of tokens from the internet, books, code) |
+| **Architecture**         | Varies widely (decision trees, SVMs, CNNs, RNNs...)                   | Almost exclusively the **Transformer** architecture (2017)                          |
+| **Input/Output**         | Fixed format (tabular data → number, image → class label)             | Flexible natural language (text → text, covering almost any task)                   |
+| **How you "program" it** | Feature engineering + training                                        | **Prompting** — you describe what you want in natural language                      |
+| **Generalization**       | Narrow — only does what it was trained for                            | Broad — handles tasks it was never explicitly trained for (zero-shot)               |
+
 
 #### The Training Objective: Why "Predict the Next Token" Is So Powerful
 
@@ -527,6 +580,7 @@ Mathematically, attention is computed as:
 $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right) V$$
 
 Where:
+
 - **Q (Query):** "What am I looking for?" — what the current token wants to know.
 - **K (Key):** "What do I contain?" — what each other token advertises about itself.
 - **V (Value):** "What information do I carry?" — the actual content to retrieve.
@@ -555,17 +609,7 @@ These capabilities aren't present in smaller models and appear somewhat disconti
 
 ### 7. Tokens — How Models Actually "Read"
 
-<!-- <thought>
-The critical misconception to address: beginners assume the model processes
-words. It doesn't. It processes tokens, which are sub-word units. The best
-analogy: Imagine you're a foreigner learning English, and you don't have a
-complete dictionary. When you encounter "unbreakable," you don't know the
-whole word, but you recognize the pieces: "un" + "break" + "able." Each piece
-carries meaning you can combine. That's tokenization — the model breaks text
-into learned sub-word pieces it can work with. This also directly impacts
-cost (APIs charge per token) and context limits (models have a max token
-window, not a max word window).
-</thought> -->
+
 
 #### Why Not Just Use Words?
 
@@ -644,13 +688,15 @@ A rough rule of thumb for English text:
 
 But this varies significantly:
 
-| Text Type | Tokens per Word (approx.) |
-|---|---|
-| Simple English prose | ~1.2–1.3 |
-| Technical / medical text | ~1.5–1.8 (more rare words = more splits) |
-| Source code | ~2.0–3.0+ (symbols, indentation, syntax) |
-| Non-English languages | ~1.5–4.0+ (depends on how well the tokenizer represents that language) |
-| Emojis / special characters | Often 1–3 tokens *each* |
+
+| Text Type                   | Tokens per Word (approx.)                                              |
+| --------------------------- | ---------------------------------------------------------------------- |
+| Simple English prose        | ~1.2–1.3                                                               |
+| Technical / medical text    | ~1.5–1.8 (more rare words = more splits)                               |
+| Source code                 | ~2.0–3.0+ (symbols, indentation, syntax)                               |
+| Non-English languages       | ~1.5–4.0+ (depends on how well the tokenizer represents that language) |
+| Emojis / special characters | Often 1–3 tokens *each*                                                |
+
 
 **Practical example:**
 
@@ -702,44 +748,50 @@ This means non-English users hit context limits sooner and pay more per API call
 
 ---
 
-<!-- ============================================================ -->
-<!-- SECTION: GLOSSARY                                             -->
-<!-- ============================================================ -->
+
+
+
+
+
 
 ## Glossary
 
-| Term | Definition |
-|---|---|
-| **Machine Learning** | The process of training software (a model) to make predictions or generate content from data, rather than explicitly programming rules. |
-| **Supervised Learning** | Training a model on labeled (input, output) pairs so it learns to predict outputs for new inputs. |
-| **Classification** | A supervised learning task where the model predicts a discrete category (e.g., spam or not spam). |
-| **Regression** | A supervised learning task where the model predicts a continuous number (e.g., house price, rainfall). |
-| **Unsupervised Learning** | Training a model on unlabeled data to discover hidden structure (clusters, patterns, anomalies). |
-| **Clustering** | An unsupervised technique that groups similar data points together without predefined categories. |
-| **Reinforcement Learning** | Training an agent to make decisions by interacting with an environment and receiving reward/penalty signals. |
-| **Policy** | In RL, the learned strategy that maps states to actions to maximize cumulative reward. |
-| **Generative AI** | A class of models that creates new content (text, images, code, video) from user input. |
-| **Self-Supervised Learning** | A form of unsupervised learning where the model generates its own labels from the data structure (e.g., predicting masked words). |
-| **Foundation Model** | A large model pre-trained on broad data, designed to be adapted for many downstream tasks via fine-tuning or prompting. |
-| **Large Language Model (LLM)** | A foundation model specialized in language, trained on massive text corpora to predict the next token. |
-| **Transformer** | The neural network architecture (2017) that uses self-attention to process all tokens in parallel, enabling modern LLMs. |
-| **Self-Attention** | A mechanism where each token computes relevance scores against all other tokens to build context-aware representations. |
-| **Token** | The atomic sub-word unit an LLM processes. Not a word — common words are single tokens; rare words are split into multiple tokens. |
-| **Tokenizer** | The algorithm (e.g., BPE) that converts raw text into a sequence of token IDs from a fixed vocabulary. |
-| **BPE (Byte-Pair Encoding)** | A tokenization algorithm that iteratively merges the most frequent adjacent character pairs to build a sub-word vocabulary. |
-| **Feature** | An input variable the model uses to make predictions (e.g., temperature, square footage). |
-| **Label** | The correct output value in a supervised learning dataset — the "answer" the model learns to predict. |
-| **Inference** | Using a trained model to make predictions on new, unseen data in production. |
-| **Fine-Tuning** | Further training a pre-trained model on a smaller, task-specific dataset to specialize its behavior. |
-| **RAG (Retrieval-Augmented Generation)** | A pattern where the model retrieves external documents at inference time to ground its response in specific knowledge. |
-| **LoRA (Low-Rank Adaptation)** | A parameter-efficient fine-tuning method that trains small adapter weights while keeping the base model frozen. |
-| **Context Window** | The maximum number of tokens the model can process in a single forward pass (prompt + response combined). |
-| **Emergence** | Capabilities that appear in large models but are absent in smaller ones, despite no explicit training for those capabilities. |
-| **RLHF** | Reinforcement Learning from Human Feedback — a technique to align model outputs with human preferences using a learned reward model. |
-| **Overfitting** | When a model memorizes training data instead of learning generalizable patterns, performing well on training data but poorly on new data. |
-| **Loss Function** | A mathematical function that measures how wrong a model's prediction is. Training minimizes this function. |
-| **Gradient Descent** | An optimization algorithm that iteratively adjusts model parameters in the direction that reduces the loss. |
-| **Backpropagation** | The algorithm that computes how much each model parameter contributed to the prediction error, enabling gradient descent. |
+
+| Term                                     | Definition                                                                                                                                |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Machine Learning**                     | The process of training software (a model) to make predictions or generate content from data, rather than explicitly programming rules.   |
+| **Supervised Learning**                  | Training a model on labeled (input, output) pairs so it learns to predict outputs for new inputs.                                         |
+| **Classification**                       | A supervised learning task where the model predicts a discrete category (e.g., spam or not spam).                                         |
+| **Regression**                           | A supervised learning task where the model predicts a continuous number (e.g., house price, rainfall).                                    |
+| **Unsupervised Learning**                | Training a model on unlabeled data to discover hidden structure (clusters, patterns, anomalies).                                          |
+| **Clustering**                           | An unsupervised technique that groups similar data points together without predefined categories.                                         |
+| **Reinforcement Learning**               | Training an agent to make decisions by interacting with an environment and receiving reward/penalty signals.                              |
+| **Policy**                               | In RL, the learned strategy that maps states to actions to maximize cumulative reward.                                                    |
+| **Generative AI**                        | A class of models that creates new content (text, images, code, video) from user input.                                                   |
+| **Self-Supervised Learning**             | A form of unsupervised learning where the model generates its own labels from the data structure (e.g., predicting masked words).         |
+| **Foundation Model**                     | A large model pre-trained on broad data, designed to be adapted for many downstream tasks via fine-tuning or prompting.                   |
+| **Large Language Model (LLM)**           | A foundation model specialized in language, trained on massive text corpora to predict the next token.                                    |
+| **Transformer**                          | The neural network architecture (2017) that uses self-attention to process all tokens in parallel, enabling modern LLMs.                  |
+| **Self-Attention**                       | A mechanism where each token computes relevance scores against all other tokens to build context-aware representations.                   |
+| **Token**                                | The atomic sub-word unit an LLM processes. Not a word — common words are single tokens; rare words are split into multiple tokens.        |
+| **Tokenizer**                            | The algorithm (e.g., BPE) that converts raw text into a sequence of token IDs from a fixed vocabulary.                                    |
+| **BPE (Byte-Pair Encoding)**             | A tokenization algorithm that iteratively merges the most frequent adjacent character pairs to build a sub-word vocabulary.               |
+| **Feature**                              | An input variable the model uses to make predictions (e.g., temperature, square footage).                                                 |
+| **Label**                                | The correct output value in a supervised learning dataset — the "answer" the model learns to predict.                                     |
+| **Parameter**                            | A single numerical value inside the model (weight or bias) that is adjusted during training. "70B model" = 70 billion parameters.         |
+| **Hyperparameter**                       | A configuration value set by the engineer *before* training (learning rate, batch size, number of layers). Not learned from data.         |
+| **Inference**                            | Using a trained model to make predictions on new, unseen data in production.                                                              |
+| **Fine-Tuning**                          | Further training a pre-trained model on a smaller, task-specific dataset to specialize its behavior.                                      |
+| **RAG (Retrieval-Augmented Generation)** | A pattern where the model retrieves external documents at inference time to ground its response in specific knowledge.                    |
+| **LoRA (Low-Rank Adaptation)**           | A parameter-efficient fine-tuning method that trains small adapter weights while keeping the base model frozen.                           |
+| **Context Window**                       | The maximum number of tokens the model can process in a single forward pass (prompt + response combined).                                 |
+| **Emergence**                            | Capabilities that appear in large models but are absent in smaller ones, despite no explicit training for those capabilities.             |
+| **RLHF**                                 | Reinforcement Learning from Human Feedback — a technique to align model outputs with human preferences using a learned reward model.      |
+| **Overfitting**                          | When a model memorizes training data instead of learning generalizable patterns, performing well on training data but poorly on new data. |
+| **Loss Function**                        | A mathematical function that measures how wrong a model's prediction is. Training minimizes this function.                                |
+| **Gradient Descent**                     | An optimization algorithm that iteratively adjusts model parameters in the direction that reduces the loss.                               |
+| **Backpropagation**                      | The algorithm that computes how much each model parameter contributed to the prediction error, enabling gradient descent.                 |
+
 
 ---
 
@@ -747,12 +799,13 @@ This means non-English users hit context limits sooner and pay more per API call
 
 After reading this guide, you should be able to answer:
 
-- [ ] *"What is machine learning?"* → Training software to make predictions or generate content from data, rather than explicitly programming rules.
-- [ ] *"What's the difference between supervised and unsupervised learning?"* → Supervised uses labeled data to learn input→output mappings; unsupervised finds hidden structure in unlabeled data.
-- [ ] *"What is reinforcement learning?"* → An agent learns by interacting with an environment, receiving rewards/penalties, and optimizing a policy to maximize cumulative reward.
-- [ ] *"What is generative AI?"* → Models that create new content (text, images, code, video) from user input, trained via self-supervised pre-training + fine-tuning + RLHF.
-- [ ] *"What are the five stages of supervised learning?"* → Data → Model → Training → Evaluating → Inference.
-- [ ] *"What is a foundation model?"* → A large model pre-trained on broad data that can be adapted for many tasks, replacing the old "one model per task" approach.
-- [ ] *"How is an LLM different from traditional ML?"* → Traditional ML has a task-specific objective and fixed I/O. An LLM has a universal objective (predict next token) and flexible natural language I/O, enabling broad generalization.
-- [ ] *"What's the difference between a token and a word?"* → A token is a sub-word unit the model actually processes. Common words are single tokens; rare/long words get split into multiple tokens. APIs charge per token, not per word.
-- [ ] *"Why do tokens matter for cost and context limits?"* → Because both are measured in tokens. More tokens = higher cost and less room in the context window.
+- *"What is machine learning?"* → Training software to make predictions or generate content from data, rather than explicitly programming rules.
+- *"What's the difference between supervised and unsupervised learning?"* → Supervised uses labeled data to learn input→output mappings; unsupervised finds hidden structure in unlabeled data.
+- *"What is reinforcement learning?"* → An agent learns by interacting with an environment, receiving rewards/penalties, and optimizing a policy to maximize cumulative reward.
+- *"What is generative AI?"* → Models that create new content (text, images, code, video) from user input, trained via self-supervised pre-training + fine-tuning + RLHF.
+- *"What are the five stages of supervised learning?"* → Data → Model → Training → Evaluating → Inference.
+- *"What is a foundation model?"* → A large model pre-trained on broad data that can be adapted for many tasks, replacing the old "one model per task" approach.
+- *"How is an LLM different from traditional ML?"* → Traditional ML has a task-specific objective and fixed I/O. An LLM has a universal objective (predict next token) and flexible natural language I/O, enabling broad generalization.
+- *"What's the difference between a token and a word?"* → A token is a sub-word unit the model actually processes. Common words are single tokens; rare/long words get split into multiple tokens. APIs charge per token, not per word.
+- *"Why do tokens matter for cost and context limits?"* → Because both are measured in tokens. More tokens = higher cost and less room in the context window.
+

@@ -124,4 +124,4 @@ if __name__ == "__main__":
     print(f"  Model  : {MODEL}")
     print(f"  Ollama : {BASE_URL}")
     print(f"  Docs   : see README.md for curl examples\n")
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001, threaded=True)
