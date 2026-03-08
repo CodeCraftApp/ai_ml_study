@@ -20,6 +20,7 @@
       - [Side-by-Side Summary](#side-by-side-summary)
     - [Foundation Models](#foundation-models)
     - [Large Language Models (LLMs)](#large-language-models-llms)
+    - [How an LLM Generates Text — Visual Flow](#how-an-llm-generates-text--visual-flow)
   - [1.2 Natural Language Processing (NLP) Tools](#12-natural-language-processing-nlp-tools)
     - [Tokenization](#tokenization)
     - [Stemming](#stemming)
@@ -32,6 +33,7 @@
     - [Few-Shot Prompting](#few-shot-prompting)
     - [Chain-of-Thought (CoT) Prompting](#chain-of-thought-cot-prompting)
     - [Self-Consistency](#self-consistency)
+    - [Which Prompting Technique Should I Use?](#which-prompting-technique-should-i-use)
 - [Module 2: The LangChain Framework & LCEL](#module-2-the-langchain-framework--lcel)
   - [2.1 LangChain Core Components](#21-langchain-core-components)
     - [Chains](#chains)
@@ -44,6 +46,19 @@
     - [Building an LCEL Chain — Step by Step](#building-an-lcel-chain--step-by-step)
     - [Composition Primitives](#composition-primitives)
     - [Type Coercion](#type-coercion)
+  - [2.3 The LangChain Ecosystem: Beyond the Basics](#23-the-langchain-ecosystem-beyond-the-basics)
+    - [Why LangChain Over Raw API Calls?](#why-langchain-over-raw-api-calls)
+    - [Document Loaders](#document-loaders)
+    - [Text Splitters](#text-splitters)
+    - [Vector Stores & Embeddings](#vector-stores--embeddings)
+    - [RAG — Retrieval-Augmented Generation](#rag--retrieval-augmented-generation)
+  - [2.4 Advanced LCEL Patterns](#24-advanced-lcel-patterns)
+    - [RunnablePassthrough — Forwarding Input](#runnablepassthrough--forwarding-input)
+    - [RunnableBranch — Conditional Routing](#runnablebranch--conditional-routing)
+    - [Fallbacks — Graceful Degradation](#fallbacks--graceful-degradation)
+    - [Streaming — Token-by-Token Output](#streaming--token-by-token-output)
+    - [Batch Processing — Throughput](#batch-processing--throughput)
+    - [LCEL Methods at a Glance](#lcel-methods-at-a-glance)
 - [Module 3: Full-Stack Development & Model Selection](#module-3-full-stack-development--model-selection)
   - [3.1 Web Development with Flask](#31-web-development-with-flask)
     - [Core Concepts](#core-concepts)
@@ -52,6 +67,7 @@
     - [Key Evaluation Factors](#key-evaluation-factors)
     - [The "Large-to-Small" Strategy](#the-large-to-small-strategy)
     - [Key Models Referenced in the Course](#key-models-referenced-in-the-course)
+- [Hands-On: Flask + LCEL Demo](#hands-on-flask--lcel-demo)
 - [Quick Reference: Technical Cheat Sheet](#quick-reference-technical-cheat-sheet)
 - [Key Takeaways](#key-takeaways)
 
@@ -126,9 +142,9 @@ P(X | Y) → generates an image matching that description
 
 This is how text-to-image models (Stable Diffusion, DALL-E) and instruction-following LLMs work. The condition Y is your prompt, and the model generates data X that's consistent with it.
 
-**How LLMs fit in:** An autoregressive LLM like GPT models \( P(x_1, x_2, ..., x_n) \) — the joint probability of a sequence of tokens. It decomposes this using the **chain rule of probability**:
+**How LLMs fit in:** An autoregressive LLM like GPT models $P(x_1, x_2, ..., x_n)$ — the joint probability of a sequence of tokens. It decomposes this using the **chain rule of probability**:
 
-\[ P(x_1, x_2, ..., x_n) = P(x_1) \times P(x_2|x_1) \times P(x_3|x_1, x_2) \times ... \times P(x_n|x_1, ..., x_{n-1}) \]
+$$P(x_1, x_2, ..., x_n) = P(x_1) \times P(x_2|x_1) \times P(x_3|x_1, x_2) \times ... \times P(x_n|x_1, ..., x_{n-1})$$
 
 In plain English: the model predicts one token at a time, where each prediction is conditioned on everything that came before it. When you see an LLM "writing" text, it's repeatedly asking *"given everything so far, what's the most likely next token?"* and sampling from that distribution.
 
@@ -136,7 +152,7 @@ In plain English: the model predicts one token at a time, where each prediction 
 
 Here's an important nuance: because a generative model learns P(X|Y) and P(Y), it can *derive* the discriminative probability P(Y|X) using **Bayes' Theorem**:
 
-\[ P(Y|X) = \frac{P(X|Y) \times P(Y)}{P(X)} \]
+$$P(Y|X) = \frac{P(X|Y) \times P(Y)}{P(X)}$$
 
 Where:
 - **P(X|Y)** = likelihood — how probable is this data given this class? (learned by the generative model)
@@ -195,9 +211,9 @@ When an LLM generates text, at each step it produces a probability distribution 
 
 - **Temperature (T):** Rescales the raw logits before converting them to probabilities via softmax. The math:
 
-  \[ P(token_i) = \frac{e^{z_i / T}}{\sum_j e^{z_j / T}} \]
+  $$P(token_i) = \frac{e^{z_i / T}}{\sum_j e^{z_j / T}}$$
 
-  Where \( z_i \) is the raw logit for token *i*. When T → 0, the distribution becomes a spike on the highest-logit token (greedy/deterministic). When T → ∞, all tokens become equally likely (random noise). Practical range: 0.0–1.0. Use low T (0.0–0.3) for factual/code tasks, higher T (0.7–1.0) for creative writing.
+  Where $z_i$ is the raw logit for token *i*. When T → 0, the distribution becomes a spike on the highest-logit token (greedy/deterministic). When T → ∞, all tokens become equally likely (random noise). Practical range: 0.0–1.0. Use low T (0.0–0.3) for factual/code tasks, higher T (0.7–1.0) for creative writing.
 
 - **Top-p (nucleus sampling):** Instead of sampling from the full vocabulary, sort tokens by probability, then keep only the smallest set of tokens whose cumulative probability ≥ p. This dynamically adjusts the candidate pool — when the model is confident, few tokens pass the threshold; when uncertain, more do. Typical value: 0.9–0.95.
 
@@ -206,6 +222,21 @@ When an LLM generates text, at each step it produces a probability distribution 
 - **Max tokens:** Hard cap on the number of tokens the model will generate in a single response. Does not affect quality — just prevents runaway generation.
 
 - **Stop sequences:** Strings (e.g., `"\n\n"`, `"User:"`) that tell the model to halt generation when encountered. Useful for controlling output boundaries in multi-turn or structured scenarios.
+
+#### How an LLM Generates Text — Visual Flow
+
+```mermaid
+flowchart LR
+    A["Input Text"] --> B["Tokenize"]
+    B --> C["Model Forward Pass"]
+    C --> D["Probability Distribution\nover vocabulary"]
+    D --> E{"Apply sampling\n(temp, top-p, top-k)"}
+    E --> F["Select next token"]
+    F --> G{"Stop condition\nmet?"}
+    G -- No --> C
+    G -- Yes --> H["Decode tokens\nto text"]
+    H --> I["Output"]
+```
 
 ---
 
@@ -350,6 +381,23 @@ Majority vote → $10 ✓
 
 **When to use:** High-stakes or complex reasoning tasks where a single chain-of-thought might contain errors.
 
+#### Which Prompting Technique Should I Use?
+
+```mermaid
+flowchart TD
+    Start["I need the LLM\nto do something"] --> Q1{"Is the task simple\nand well-defined?"}
+    Q1 -- Yes --> ZS["Zero-Shot\nJust describe the task"]
+    Q1 -- No --> Q2{"Do I need a specific\noutput format?"}
+    Q2 -- Yes --> Q3{"One example\nsufficient?"}
+    Q3 -- Yes --> OS["One-Shot\nProvide 1 example"]
+    Q3 -- No --> FS["Few-Shot\nProvide 2-5 examples"]
+    Q2 -- No --> Q4{"Does it require\nmulti-step reasoning?"}
+    Q4 -- Yes --> Q5{"Is high accuracy\ncritical?"}
+    Q5 -- No --> COT["Chain-of-Thought\nAsk to think step by step"]
+    Q5 -- Yes --> SC["Self-Consistency\nMultiple CoT paths + vote"]
+    Q4 -- No --> FS
+```
+
 ---
 
 ## Module 2: The LangChain Framework & LCEL
@@ -357,6 +405,31 @@ Majority vote → $10 ✓
 ### 2.1 LangChain Core Components
 
 [LangChain](https://www.langchain.com/) is an open-source framework that modularizes the development of LLM-powered applications by providing composable building blocks. It abstracts common patterns so you don't have to reinvent them for every project.
+
+```mermaid
+graph TB
+    subgraph langchain_core [LangChain Core Components]
+        PT["PromptTemplate"] --> LLM["LLM / ChatModel"]
+        LLM --> OP["OutputParser"]
+        MEM["Memory"] -.->|injects history| PT
+        TOOLS["Tools"] -.->|called by| AGENT
+    end
+
+    subgraph orchestration [Orchestration]
+        CHAIN["Chains\n(fixed sequence)"]
+        AGENT["Agents\n(dynamic routing)"]
+    end
+
+    subgraph data_layer [Data Layer]
+        LOADER["Document Loaders"] --> SPLITTER["Text Splitters"]
+        SPLITTER --> EMBED["Embeddings"]
+        EMBED --> VSTORE["Vector Store"]
+    end
+
+    PT --> CHAIN
+    PT --> AGENT
+    VSTORE -.->|retrieval| PT
+```
 
 #### Chains
 
@@ -502,6 +575,19 @@ print(result)
 
 The data flows left to right: the template formats the prompt → the LLM generates a response → the parser extracts clean text.
 
+```mermaid
+flowchart LR
+    subgraph input [Input]
+        D["{'question': 'What is\nquantum computing?'}"]
+    end
+    subgraph pipeline [LCEL Pipeline]
+        A["PromptTemplate\n→ formatted string"] -->|pipe| B["LLM\n→ raw AI response"]
+        B -->|pipe| C["StrOutputParser\n→ clean text"]
+    end
+    D --> A
+    C --> E["Final string output"]
+```
+
 #### Composition Primitives
 
 **RunnableSequence** — Components execute one after another:
@@ -547,6 +633,239 @@ chain = template | llm | {
     "word_count": lambda x: len(x.split()),
 }
 ```
+
+---
+
+### 2.3 The LangChain Ecosystem: Beyond the Basics
+
+LangChain is more than chains and prompts — it's an ecosystem of tools for the entire lifecycle of an LLM application: loading data, chunking it, storing embeddings, retrieving context, and generating responses. This section covers the pieces you need to build production-grade systems.
+
+#### Why LangChain Over Raw API Calls?
+
+You *can* call the OpenAI or Ollama API directly with `requests`. So why use a framework?
+
+| Problem | Raw API Calls | LangChain Solution |
+|---|---|---|
+| **Provider lock-in** | Your code is tightly coupled to one API's format | Swap `ChatOllama` for `ChatOpenAI` — same chain works |
+| **Composability** | Manual glue code for multi-step workflows | Pipe operator chains components declaratively |
+| **Observability** | `print()` debugging | LangSmith tracing, automatic logging |
+| **Common patterns** | Rewrite RAG, agents, memory from scratch every time | Pre-built abstractions tested by the community |
+| **Streaming** | Implement SSE/chunked responses yourself | `.stream()` works out of the box |
+
+LangChain earns its complexity when your application goes beyond a single prompt/response — when you need retrieval, multi-step reasoning, tool use, or provider flexibility.
+
+#### Document Loaders
+
+Document loaders ingest data from various sources into LangChain's `Document` format (text + metadata).
+
+```python
+from langchain_community.document_loaders import (
+    PyPDFLoader,
+    CSVLoader,
+    WebBaseLoader,
+    TextLoader,
+)
+
+pdf_docs = PyPDFLoader("report.pdf").load()
+csv_docs = CSVLoader("data.csv").load()
+web_docs = WebBaseLoader("https://example.com/article").load()
+txt_docs = TextLoader("notes.txt").load()
+```
+
+Each loader returns a list of `Document` objects with `.page_content` (the text) and `.metadata` (source, page number, etc.). There are 100+ loaders for Notion, Slack, Google Drive, databases, and more.
+
+#### Text Splitters
+
+Raw documents are usually too long to fit in a model's context window. Text splitters break them into manageable chunks while preserving semantic coherence.
+
+```python
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000,
+    chunk_overlap=200,
+    separators=["\n\n", "\n", ". ", " ", ""],
+)
+
+chunks = splitter.split_documents(pdf_docs)
+```
+
+**Why `RecursiveCharacterTextSplitter`?** It tries to split on paragraph breaks first, then sentences, then words — preserving natural boundaries rather than cutting mid-sentence. The `chunk_overlap` ensures context isn't lost at boundaries.
+
+#### Vector Stores & Embeddings
+
+To retrieve relevant chunks at query time, you convert text into **embeddings** (dense numerical vectors) and store them in a **vector store** that supports similarity search.
+
+```python
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain_community.vectorstores import FAISS
+
+embeddings = OllamaEmbeddings(model="llama3.2")
+
+vectorstore = FAISS.from_documents(chunks, embeddings)
+
+retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
+```
+
+When a user asks a question, their query is also embedded, and the vector store returns the `k` most similar chunks — giving the LLM targeted context instead of the entire document.
+
+#### RAG — Retrieval-Augmented Generation
+
+RAG is the pattern that ties it all together: **retrieve** relevant context from your data, then **generate** a response grounded in that context. This is how you make an LLM "know" about your private documents without fine-tuning.
+
+```mermaid
+flowchart LR
+    subgraph offline [Offline: Indexing Pipeline]
+        A["Documents\n(PDF, CSV, web)"] --> B["Text Splitter\n(chunking)"]
+        B --> C["Embedding Model"]
+        C --> D["Vector Store\n(FAISS, Chroma)"]
+    end
+
+    subgraph online [Online: Query Pipeline]
+        E["User Question"] --> F["Embed query"]
+        F --> G["Similarity Search"]
+        D -.-> G
+        G --> H["Retrieved Chunks\n(top-k context)"]
+        H --> I["PromptTemplate\n(question + context)"]
+        I --> J["LLM"]
+        J --> K["Answer"]
+    end
+```
+
+**Full RAG chain in LCEL:**
+
+```python
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+
+rag_prompt = ChatPromptTemplate.from_messages([
+    ("system",
+     "Answer the question based only on the following context:\n\n"
+     "{context}\n\n"
+     "If the answer is not in the context, say 'I don't know'."),
+    ("human", "{question}"),
+])
+
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
+
+rag_chain = (
+    {"context": retriever | format_docs, "question": RunnablePassthrough()}
+    | rag_prompt
+    | llm
+    | StrOutputParser()
+)
+
+answer = rag_chain.invoke("What were Q3 revenue numbers?")
+```
+
+This single chain: retrieves relevant chunks → formats them as context → injects them into the prompt → sends to the LLM → parses the output. All declarative, all composable.
+
+---
+
+### 2.4 Advanced LCEL Patterns
+
+Beyond basic pipes, LCEL provides primitives for real-world complexity: passing data through unchanged, conditional routing, fallback models, streaming, and batch processing.
+
+#### RunnablePassthrough — Forwarding Input
+
+Sometimes you need the original input alongside a transformed version. `RunnablePassthrough` passes data through unchanged while other branches transform it.
+
+```python
+from langchain_core.runnables import RunnablePassthrough, RunnableParallel
+
+chain = RunnableParallel(
+    context=retriever | format_docs,
+    question=RunnablePassthrough(),
+)
+
+result = chain.invoke("What is LCEL?")
+# result = {"context": "...retrieved text...", "question": "What is LCEL?"}
+```
+
+This is the backbone of every RAG chain — you need both the retrieved context *and* the original question to build the final prompt.
+
+#### RunnableBranch — Conditional Routing
+
+Route input to different chains based on conditions. Think of it as an `if/elif/else` for pipelines.
+
+```python
+from langchain_core.runnables import RunnableBranch
+
+branch = RunnableBranch(
+    (lambda x: "code" in x["topic"], code_chain),
+    (lambda x: "math" in x["topic"], math_chain),
+    general_chain,  # default fallback
+)
+
+result = branch.invoke({"topic": "code", "question": "Write a sort function"})
+```
+
+```mermaid
+flowchart TD
+    Input["User Input"] --> Check{"Route by topic"}
+    Check -->|"topic contains 'code'"| CodeChain["Code-specialized chain"]
+    Check -->|"topic contains 'math'"| MathChain["Math-specialized chain"]
+    Check -->|default| GenChain["General-purpose chain"]
+    CodeChain --> Output["Response"]
+    MathChain --> Output
+    GenChain --> Output
+```
+
+#### Fallbacks — Graceful Degradation
+
+If your primary model fails (rate limit, timeout, error), automatically fall back to a backup.
+
+```python
+from langchain_ollama import ChatOllama
+
+primary = ChatOllama(model="llama3.2")
+backup = ChatOllama(model="mistral")
+
+reliable_llm = primary.with_fallbacks([backup])
+
+chain = prompt | reliable_llm | parser
+```
+
+If `llama3.2` throws an exception, LCEL transparently retries with `mistral`. You can chain multiple fallbacks in priority order.
+
+#### Streaming — Token-by-Token Output
+
+For user-facing applications, waiting for the full response feels slow. Streaming delivers tokens as they're generated.
+
+```python
+for chunk in chain.stream({"question": "Tell me about black holes"}):
+    print(chunk, end="", flush=True)
+```
+
+Every LCEL chain supports `.stream()` automatically. The output is an iterator that yields partial results — the same way ChatGPT's UI shows text appearing word by word.
+
+#### Batch Processing — Throughput
+
+Process multiple inputs concurrently for higher throughput.
+
+```python
+questions = [
+    {"question": "What is gravity?"},
+    {"question": "What is photosynthesis?"},
+    {"question": "What is entropy?"},
+]
+
+results = chain.batch(questions, config={"max_concurrency": 3})
+```
+
+`.batch()` runs all inputs through the chain in parallel (up to `max_concurrency`), returning a list of results. Essential for data processing pipelines, evaluation scripts, and bulk operations.
+
+#### LCEL Methods at a Glance
+
+| Method | What It Does | Use Case |
+|---|---|---|
+| `.invoke(input)` | Run once, return full result | Single request |
+| `.stream(input)` | Yield tokens as generated | Real-time UIs |
+| `.batch(inputs)` | Run many inputs in parallel | Data pipelines |
+| `.ainvoke(input)` | Async version of invoke | Async web servers |
+| `.astream(input)` | Async streaming | Async real-time UIs |
 
 ---
 
@@ -601,17 +920,27 @@ def generate():
 
 #### Typical Flask + LangChain Architecture
 
-```
-┌──────────────┐     HTTP      ┌──────────────┐    LCEL Chain    ┌─────────┐
-│   Browser    │ ───────────▶  │  Flask App   │ ──────────────▶  │   LLM   │
-│  (Frontend)  │ ◀───────────  │  (Backend)   │ ◀──────────────  │  (API)  │
-└──────────────┘   HTML/JSON   └──────────────┘    Response      └─────────┘
+```mermaid
+sequenceDiagram
+    participant User as User / curl
+    participant Flask as Flask App
+    participant LCEL as LCEL Chain
+    participant LLM as LLM (Ollama / API)
+
+    User->>Flask: POST /api/chat {"message": "..."}
+    Flask->>LCEL: chain.invoke({"message": "..."})
+    LCEL->>LCEL: PromptTemplate formats input
+    LCEL->>LLM: Send formatted prompt
+    LLM-->>LCEL: Raw response tokens
+    LCEL->>LCEL: OutputParser extracts text
+    LCEL-->>Flask: Parsed string result
+    Flask-->>User: JSON {"response": "..."}
 ```
 
-1. User submits a prompt through a web form.
-2. Flask receives the request, passes the input to an LCEL chain.
-3. The chain processes it through a prompt template → LLM → output parser.
-4. Flask renders the result back to the user in an HTML template.
+1. User sends a request (browser form, curl, frontend app).
+2. Flask receives it, passes the input to an LCEL chain.
+3. The chain processes it through prompt template → LLM → output parser.
+4. Flask returns the result as JSON or renders it in an HTML template.
 
 ---
 
@@ -639,6 +968,20 @@ A practical approach to model selection:
 3. **Compare:** If the smaller model produces acceptable quality for your use case, use it — you save significantly on cost and latency.
 4. **Iterate:** As new models release, re-evaluate periodically.
 
+```mermaid
+flowchart TD
+    A["Define your task\nand quality bar"] --> B["Test with largest\navailable model"]
+    B --> C{"Quality\nacceptable?"}
+    C -- No --> D["Refine prompts or\nconsider fine-tuning"]
+    D --> B
+    C -- Yes --> E["Test with a smaller\ncheaper model"]
+    E --> F{"Quality still\nacceptable?"}
+    F -- Yes --> G["Use the smaller model\n(save cost + latency)"]
+    F -- No --> H["Use the larger model\nor try a mid-size option"]
+    G --> I["Re-evaluate when\nnew models release"]
+    H --> I
+```
+
 #### Key Models Referenced in the Course
 
 | Model | Developer | Architecture | Strengths |
@@ -646,6 +989,80 @@ A practical approach to model selection:
 | **Llama 3** | Meta | Dense Transformer | Strong reasoning, open-weight, large community |
 | **IBM Granite** | IBM | Dense Transformer | Enterprise-grade, governance-focused, multi-language |
 | **Mixtral** | Mistral AI | Mixture of Experts (MoE) | Efficient inference — only activates a subset of parameters per token |
+
+---
+
+## Hands-On: Flask + LCEL Demo
+
+Theory is only half the picture. The `demos/flask_lcel_demo/` folder contains a working Flask API that you can run locally and test with `curl`. It demonstrates three LCEL patterns against a local Ollama model — no cloud API keys required.
+
+```mermaid
+flowchart LR
+    subgraph client [Client]
+        CURL["curl / Postman / any HTTP client"]
+    end
+
+    subgraph server [Flask Server :5000]
+        EP1["/api/chat"]
+        EP2["/api/summarize"]
+        EP3["/api/analyze"]
+    end
+
+    subgraph lcel [LCEL Chains]
+        C1["prompt | llm | parser"]
+        C2["summarize_prompt | llm | parser"]
+        C3["RunnableParallel\n(summary + sentiment + keywords)"]
+    end
+
+    subgraph ollama [Ollama localhost:11434]
+        MODEL["llama3.2"]
+    end
+
+    CURL --> EP1 --> C1 --> MODEL
+    CURL --> EP2 --> C2 --> MODEL
+    CURL --> EP3 --> C3 --> MODEL
+```
+
+### Quick Start
+
+```bash
+# 1. Pull a model (one-time, ~2GB)
+ollama pull llama3.2
+
+# 2. Install dependencies
+cd demos/flask_lcel_demo
+pip install -r requirements.txt
+
+# 3. Run the server
+python app.py
+```
+
+### Try It
+
+```bash
+# Basic chat — sequential chain
+curl -s -X POST http://localhost:5000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is LCEL in 2 sentences?"}' | python -m json.tool
+
+# Summarize — constrained prompt template
+curl -s -X POST http://localhost:5000/api/summarize \
+  -H "Content-Type: application/json" \
+  -d '{"text": "LangChain is an open-source framework..."}' | python -m json.tool
+
+# Analyze — RunnableParallel (3 chains at once)
+curl -s -X POST http://localhost:5000/api/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"text": "The product launch exceeded expectations."}' | python -m json.tool
+```
+
+| Endpoint | LCEL Pattern | What It Teaches |
+|---|---|---|
+| `/api/chat` | `prompt \| llm \| parser` | Basic sequential chain |
+| `/api/summarize` | `prompt \| llm \| parser` | Prompt engineering (constrained output format) |
+| `/api/analyze` | `RunnableParallel(...)` | Parallel execution with shared input |
+
+> Full details, configuration options, and sample responses are in [`demos/flask_lcel_demo/README.md`](../demos/flask_lcel_demo/README.md).
 
 ---
 
@@ -666,9 +1083,10 @@ A practical approach to model selection:
 
 ## Key Takeaways
 
-1. **Generative AI creates; Discriminative AI classifies.** Understanding this distinction is foundational.
-2. **Prompt engineering is your primary lever** for controlling LLM behavior without retraining. Master zero-shot, few-shot, and chain-of-thought techniques.
-3. **LangChain modularizes LLM development** into reusable components (chains, agents, memory, parsers) so you can build complex applications from simple building blocks.
-4. **LCEL is the modern standard** for composing LangChain pipelines. Its pipe syntax is cleaner, supports streaming/async natively, and integrates with LangSmith for tracing.
-5. **Flask bridges AI and users** by providing a lightweight web layer to serve your LLM-powered logic.
-6. **Model selection is iterative** — start with the best model, then optimize for cost and latency by testing smaller alternatives.
+1. **Generative AI creates; Discriminative AI classifies.** Understanding this distinction — and the math behind it — is foundational.
+2. **Prompt engineering is your primary lever** for controlling LLM behavior without retraining. Use the decision tree above to pick the right technique.
+3. **LangChain is an ecosystem**, not just a chain builder. Document loaders, text splitters, vector stores, and retrievers form the data backbone; chains and agents form the orchestration layer.
+4. **RAG is the most important pattern** for production LLM apps. It lets models answer questions about *your* data without fine-tuning.
+5. **LCEL is the modern standard** for composing LangChain pipelines. Master `.invoke()`, `.stream()`, `.batch()`, `RunnableParallel`, and `RunnableBranch` — they cover 95% of use cases.
+6. **Flask bridges AI and users** — the demo in `demos/flask_lcel_demo/` proves you can go from zero to a working API in under 50 lines.
+7. **Model selection is iterative** — start large, shrink to the smallest model that meets your quality bar, and re-evaluate when new models drop.
